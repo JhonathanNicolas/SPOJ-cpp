@@ -68,6 +68,11 @@ public:
         return operands;
     }
 
+    std::string get_raw_data()
+    {
+        return raw_logic;
+    }
+
     std::string get_operators()
     {
         return operators;
@@ -93,7 +98,7 @@ public:
 
     std::string get_solution()
     {
-        if (resolve())
+        if (is_resolved)
             return resolved_logic;
         else
             return "";
@@ -108,22 +113,28 @@ private:
 
     void _find_operators_and_operands(std::string str)
     {
-        std::string operators = OPERATORS;
+        std::string _operators = OPERATORS;
         std::string collections_operators = "";
-        size_t inx_operators = operators.size() - 1;
+        size_t inx_operators = _operators.size() - 1;
+        bool is_operand = true;
 
-        for (int i = 0; i < str.size() - 1; i++)
+        for (int i = 0; i < str.size(); i++)
         {
-            for (size_t j = inx_operators; j > 0; j--)
+            is_operand = true;
+
+            for (int j = inx_operators; j >= 0; j--)
             {
-                if (str[i] == operators[j])
+                if (str[i] == _operators[j])
                 {
-                    collections_operators += str[i];
+                    operators += str[i];
+                    is_operand = false;
+                    break;
                 }
-                else
-                {
-                    operands += str[i];
-                }
+            }
+            if (is_operand)
+            {
+                operands += str[i];
+                is_operand = true;
             }
         }
     }
@@ -196,20 +207,37 @@ std::vector<Parents> finder_parents(std::string str_logic)
 std::string brackets2rpn(std::string str)
 {
     std::vector<Parents> parents;
+    std::string result = "";
+    std::string temp_sol = "";
+    std::string c_deepth = "";
+    size_t loc = 0;
+
+    Parents deepest_parent;
 
     parents = finder_parents(str);
+    deepest_parent = parents.back();
+    deepest_parent.resolve();
+    result = deepest_parent.get_solution();
 
+    for (size_t i = 0; i < parents.size() -1; i++)
+    {
+        c_deepth = '#' + std::to_string(i);
+        parents[i].resolve();
+        temp_sol = parents[i].get_solution();
+        loc = result.find(c_deepth);
+        result.replace(loc,2, temp_sol);
+    }
 
-    /*
-    @TODO: ADICIONAR LÓGICA PARA ORDENAR PARENTS EM PROFUNDIDADE E SUBTITUIR AS STRINGS PELAS LÓGICAS RESOLVIDAS
-    */
+    return result;
+
 }
 
 int main()
 {
 
     std::vector<string> str(0);
-    uint8_t t = 0;
+    int t = 0;
+
     cin >> t;
 
     if (t >= 1)
@@ -222,7 +250,7 @@ int main()
 
     for (int i = 0; i < t; i++)
     {
-        cout >> str[i];
+        cout << brackets2rpn(str[i]);
     }
 
 
