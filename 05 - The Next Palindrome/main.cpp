@@ -25,76 +25,160 @@ Warning: large Input/Output data, be careful with certain languages
 #include <iostream>
 #include <vector>
 #include <string>
+#include <iterator>
+#include <algorithm>
 using namespace std;
 
-int get_smallest_palindrome(std::string str)
+std::string get_smallest_palindrome(std::string str)
 {
-    bool is_odd;
-    int high_side, low_side, middle, number, candidate, i;
-    std::string str_high, str_low;
+    bool is_odd, is_all_nine = true;
+    int  middle, number, candidate, i, j, k;
+    std::string str_high = "", str_middle = "", str_temp = "", str_temp2 = "";
 
-    if (str.size() == 1)
-        return 11;
+    if (str.size() <= 1)
+    {
+        i = std::stoi(str);
+        return i != 9 ? std::to_string(i + 1) : "11";
+
+    }
     else if (str.size() % 2 == 0)
         is_odd = false;
     else
         is_odd = true;
 
-    if(is_odd)
+    std::string low_side(str.rbegin() + 0, str.rbegin() + str.size() / 2);
+    std::string high_side(str.rbegin() + (is_odd ? (str.size() / 2) + 1 : (str.size() / 2)), str.rend());
+    std::reverse(high_side.begin(), high_side.end());
+    std::reverse(low_side.begin(), low_side.end());
+    str_middle += str.at(str.size() / 2);
+    middle = stoi(str_middle);
+
+    if (str.find("0") != std::string::npos || (str.find("1") != std::string::npos) || (str.find("2") != std::string::npos) || (str.find("3") != std::string::npos)
+        || (str.find("4") != std::string::npos) || (str.find("5") != std::string::npos) || (str.find("6") != std::string::npos) || (str.find("7") != std::string::npos)
+        || (str.find("8") != std::string::npos))
+        is_all_nine = false;
+
+    if (is_all_nine)
     {
-        for(size_t i = str.size()-1; i >= str.size()/2; i-- )
+
+        for (i = (is_odd ? 0 : 1); i <= high_side.size(); i++)
         {
-            str_high += str[i];
+            if (str_temp == "")
+                str_temp += "1";
+            else
+                str_temp += "0";
         }
 
-        high_side = std::stoi(str_high);
+        std::string str_temp2(str_temp.rbegin() + 0, str_temp.rend());
 
-        for(size_t i = str.size()/2 - 1; i >= 0; i--)
+        if (!is_odd)
+            str_temp += "0" + str_temp2;
+        else
+            str_temp += str_temp2;
+
+        return str_temp;
+    }
+    else
+    {
+        if (!is_odd)
         {
-            str_low += str[i];
+            if (middle > (high_side[high_side.size() - 1] - '0'))
+            {
+                high_side[high_side.size() - 1] = '0' + middle;
+            }
+            else
+            {
+                is_all_nine = true;
+                for (int i = 1; i < low_side.size(); i++)
+                {
+                    if ((high_side[i] - '0') < (low_side[i] - '0'))
+                    {
+                        high_side[high_side.size() - 1] = '0' + middle + 1;
+                        if ((high_side[i] - '0') != (low_side[i] - '0'))
+                            is_all_nine = false;
+                        break;
+                    }
+                }
+                if (is_all_nine)
+                {
+                    if (middle != 9)
+                        high_side[high_side.size() - 1] = '0' + middle + 1;
+                }
+
+            }
+
+            low_side = high_side;
+            std::reverse(low_side.begin(), low_side.end());
+            return high_side + low_side;
+        }
+        else
+        {
+            if ((low_side[0] - '0') > (high_side[high_side.size() - 1] - '0'))
+            {
+                middle += 1;
+            }
+            else if ((low_side[0] - '0') == (high_side[high_side.size() - 1] - '0'))
+            {
+                is_all_nine = false;
+
+                for (int i = 1; i < low_side.size(); i++)
+                {
+                    if (((low_side[i] - '0') > (high_side[high_side.size() - i - 1] - '0')) || (((low_side[i] - '0') == (high_side[high_side.size() - i - 1] - '0')) && (i == low_side.size() - 1)))
+                    {
+                        is_all_nine = true;
+                        break;
+                    }
+                }
+                if (is_all_nine || ((high_side.size() == 1) && (((high_side[0] - '0') <= (low_side[0] - '0')))))
+                {
+                    if (middle != 9)
+                        middle += 1;
+                    else
+                    {
+                        for (int i = high_side.size() - 1; i >= 0; i--)
+                        {
+                            if ((high_side[i] - '0') != 9)
+                            {
+                                high_side[i] = ((high_side[i] + '0') + 1) - '0';
+                                middle = 0;
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+
+            low_side = high_side;
+            std::reverse(low_side.begin(), low_side.end());
+            return high_side + std::to_string(middle) + low_side;
         }
 
-        low_side = std::stoi(str_low);
-        number = std::stoi(str_high + str_low);
-        
+    }
+}
 
-        i = 0;
-        do
-        {
-            candidate = std::stoi(std::to_string(high_side+i) + std::to_string(high_side+i));
-            i++;
-        }while(candidate < number);
+int main() {
+    // your code goes here
+    int t;
+    std::vector<std::string> numbers(0);
 
-        return candidate;
+    std::cin >> t;
+
+    if (t > 0)
+    {
+        numbers.resize(t);
+    }
+
+    for (int i = 0; i < t; i++)
+    {
+        std::cin >> numbers[i];
+    }
+
+    for (int i = 0; i < t; i++)
+    {
+        std::cout << get_smallest_palindrome(numbers[i]) << endl;
     }
 
     return 0;
 }
 
-int main() {
-	// your code goes here
-	int t;
-	std::vector<std::string> numbers(0);
-	
 
-	
-	std::cin >> t;
-	
-	if (t > 0)
-	{
-		numbers.resize(t);
-	}
-	
-	for (int i = 0; i < t; i++)
-	{
-		std::cin >> numbers[i];
-
-	}
-	
-	for (int i = 0; i < t; i++)
-	{
-		std::cout << get_smallest_palindrome(numbers[i]);
-	}
-
-	return 0;
-}
