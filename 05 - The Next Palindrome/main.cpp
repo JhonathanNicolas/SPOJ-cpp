@@ -35,6 +35,22 @@ std::string get_smallest_palindrome(std::string str)
     int  middle, number, candidate, i, j, k;
     std::string str_high = "", str_middle = "", str_temp = "", str_temp2 = "";
 
+    j = str.size();
+    str_temp2 = str;
+    for (i = 0; i < j; i++)
+    {
+        if (str_temp2[i] == '0')
+        {
+            if ((i + 1) == j)
+                break;
+            str.erase(0,1);
+        }
+        else
+        {
+            break;
+        }
+    }
+
     if (str.size() <= 1)
     {
         i = std::stoi(str);
@@ -52,6 +68,9 @@ std::string get_smallest_palindrome(std::string str)
     std::reverse(low_side.begin(), low_side.end());
     str_middle += str.at(str.size() / 2);
     middle = stoi(str_middle);
+
+
+    
 
     if (str.find("0") != std::string::npos || (str.find("1") != std::string::npos) || (str.find("2") != std::string::npos) || (str.find("3") != std::string::npos)
         || (str.find("4") != std::string::npos) || (str.find("5") != std::string::npos) || (str.find("6") != std::string::npos) || (str.find("7") != std::string::npos)
@@ -82,22 +101,22 @@ std::string get_smallest_palindrome(std::string str)
     {
         if (!is_odd)
         {
-            if (middle > (high_side[high_side.size() - 1] - '0'))
+            if (middle > ((high_side[high_side.size() - 1] - '0')))
             {
-                high_side[high_side.size() - 1] = '0' + middle;
+                high_side[high_side.size() - 1] = '0' + (high_side[high_side.size() - 1] - '0') + 1;
             }
             else
             {
                 is_all_nine = true;
-                for (int i = 1; i < low_side.size(); i++)
+                for (int i = 0; i < low_side.size(); i++)
                 {
                     if ((high_side[i] - '0') < (low_side[i] - '0'))
                     {
                         high_side[high_side.size() - 1] = '0' + middle + 1;
-                        if ((high_side[i] - '0') != (low_side[i] - '0'))
-                            is_all_nine = false;
                         break;
                     }
+                    if ((high_side[i] - '0') != (low_side[i] - '0'))
+                        is_all_nine = false;
                 }
                 if (is_all_nine)
                 {
@@ -180,5 +199,3 @@ int main() {
 
     return 0;
 }
-
-
