@@ -75,17 +75,32 @@ std::string get_smallest_palindrome(std::string& str)
     string left = str_temp.substr(0, mid);
     string right = str_temp.substr(mid + is_odd);
 
-    string rev_left = string(left.rbegin(), left.rend());
-
-    if (rev_left <= right)
-        left = incrementString(left);
-
-    rev_left = string(left.rbegin(), left.rend());
-
+    string potentialPalindrome;
     if (is_odd)
-        return left + str_temp[mid] + rev_left;
+        potentialPalindrome = left + str_temp[mid] + string(left.rbegin(), left.rend());
     else
-        return left + rev_left;
+        potentialPalindrome = left + string(left.rbegin(), left.rend());
+
+    if (potentialPalindrome <= str_temp) {
+        if (is_odd) {
+            if (str_temp[mid] == '9') {
+                left = incrementString(left);
+                str_temp[mid] = '0';
+            }
+            else {
+                str_temp[mid]++;
+            }
+        }
+        else {
+            left = incrementString(left);
+        }
+    }
+
+    // Construct the palindrome using the incremented (or unchanged) values
+    if (is_odd)
+        return left + str_temp[mid] + string(left.rbegin(), left.rend());
+    else
+        return left + string(left.rbegin(), left.rend());
 }
 
 int main()
