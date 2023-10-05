@@ -25,107 +25,43 @@ Warning: large Input/Output data, be careful with certain languages
 #include <iostream>
 #include <vector>
 #include <string>
-#include <iterator>s
 #include <algorithm>
 using namespace std;
 
-std::string sum_on_string(const std::string str)
+std::string incrementString(const std::string& str)
 {
-    size_t str_len = str.size();
-    std::string result = str;
-    std::string temp = str;
+    string result = str;
+    int carry = 1;
 
-    for (int i = str_len-1; i >= 0; i--)
+    for (int i = str.size() - 1; i >= 0 && carry; i--)
     {
-        if (str[i] != 57)
-        {
-            result[i] = ((result[i] - '0') + 1) + '0';
-            return result;
-        }
-        else
-        {
-            temp = result;
-            temp.erase(i, 1);
-            result = sum_on_string(temp) + '0';
-            return result;
-        }
-    }
-}
-
-std::string find_smallest_high_side(const std::string high_side, const std::string low_side)
-{
-    size_t high_side_len, low_side_len, j = 0;
-    std::string result = "";
-
-    high_side_len = high_side.size() - 1;
-    low_side_len = low_side.size() - 1;
-    result = high_side;
-
-    if (low_side_len < high_side_len)
-    {
-        high_side_len--;
+        int sum = (str[i] - '0') + carry;
+        result[i] = (sum % 10) + '0';
+        carry = sum / 10;
     }
 
-    result = sum_on_string(result);
-    return result;
-
-}
-
-
-int compare_sides(const std::string high_side, const std::string low_side)
-{
-    size_t high_side_len, low_side_len, j = 0;
-    int result = 0;
-
-    high_side_len = high_side.size() - 1;
-    low_side_len = low_side.size()  - 1;
-    
-    if (low_side_len < high_side_len)
-    {
-        high_side_len--;
-    }
-
-    for (int i = high_side_len; i >= 0 ; i--)
-    {
-            
-
-        if ( (high_side[i] - '0') > (low_side[j] - '0') )
-        {
-            return 0;
-        }
-        else if ((high_side[i] - '0') < (low_side[j] - '0'))
-        {
-            return -1;
-        }
-        else if (((high_side[i] - '0') == (low_side[j] - '0')) && (i == 0))
-        {
-            return -1;
-        }
-
-        if(low_side_len != 0)
-            j = (j % low_side_len) + 1;
-    }
+    if (carry)
+        result.insert(result.begin(), '1');
 
     return result;
 }
 
-std::string get_smallest_palindrome(std::string str)
+std::string get_smallest_palindrome(std::string& str)
 {
-    bool is_odd, is_all_nine = true;
-    int  middle, number, candidate, i, j, side;
-    std::string str_high = "", str_middle = "", str_temp = "", str_temp2 = "";
+    int n = str.size();
+    bool has_leading_zero = false;
+    std::string str_temp = "";
 
-    j = str.size();
-    str_temp2 = str;
+    str_temp = str;
 
-    //remove leading zeros
-    for (i = 0; i < j; i++)
+    for (int i = 0; i <= n; i++)
     {
-        if (str_temp2[i] == '0')
+        if (str_temp[i] == '0')
         {
-            if ((i + 1) == j)
+            if ((i + 1) == i)
                 break;
-            str.erase(0,1);
+            str_temp.erase(0, 1);
+            has_leading_zero = true;
         }
         else
         {
@@ -133,42 +69,21 @@ std::string get_smallest_palindrome(std::string str)
         }
     }
 
-    //if it has only on digit just adds one or if it is nine return 11
-    if (str.size() <= 1)
+
+    if (n == 1)
     {
-        i = std::stoi(str);
-        return i != 9 ? std::to_string(i + 1) : "11";
-
-    }
-    else if (str.size() % 2 == 0)
-        is_odd = false;
-    else
-        is_odd = true;
-    
-    
-    if (!is_odd)
-        i = str.size() / 2;
-    else
-        i = (str.size() / 2) + 1;
-
-    std::string high_side = str.substr(0, i);
-    std::string low_side = str.substr(i);
-
-
-    // verify if all digits are nine
-    for (i = 0; i < j; i++)
-    {
-        if (str[i] != '9')
-        {
-            is_all_nine = false;
-            break;
-        }
-
+        if (str_temp == "9")
+            return "11";
+        else
+            return to_string( (str[0] - '0') + 1);
     }
 
-    if (is_all_nine) // if all digits are nine, then the next palindrome is "1 followed 0's and more 1"
+    bool allNines = all_of(str_temp.begin(), str_temp.end(), [](char c) { return c == '9'; });
+    str_temp = "";
+
+    if (allNines)
     {
-        for (i = (is_odd ? 0 : 1); i <= high_side.size(); i++)
+        for (int i = 0; i < str.size(); i++)
         {
             if (str_temp == "")
                 str_temp += "1";
@@ -176,60 +91,34 @@ std::string get_smallest_palindrome(std::string str)
                 str_temp += "0";
         }
 
-        std::string str_temp2(str_temp.rbegin() + 0, str_temp.rend());
-
-        if (!is_odd)
-            str_temp += "0" + str_temp2;
-        else
-            str_temp += str_temp2;
-
+        str_temp += "1";
         return str_temp;
     }
-    else 
-    {
 
-        side = compare_sides(high_side, low_side);
+    bool is_odd = n % 2;
+    int mid = n / 2;
 
-        if (side == 0)
-        {
-            str_middle = "";
+    string left = str_temp.substr(0, mid);
+    string right = str_temp.substr(mid + is_odd);
 
-            if (is_odd)
-            {
-                str_middle = high_side.back();
-                high_side.erase(high_side.size() - 1, 1);
-            }
+    string rev_left = string(left.rbegin(), left.rend());
 
-            low_side = high_side;
-            std::reverse(low_side.begin(), low_side.end());
-            return high_side + str_middle + low_side;
-        }
-        else
-        {
-            high_side = find_smallest_high_side(high_side, low_side);
-            low_side = high_side;
+    if (rev_left <= right)
+        left = incrementString(left);
 
-            if (is_odd)
-                low_side.resize(low_side.size() - 1);
+    rev_left = string(left.rbegin(), left.rend());
 
-            std::reverse(low_side.begin(), low_side.end());
-            return high_side + str_middle + low_side;
-        }
-
-    }
+    if (is_odd)
+        return left + str_temp[mid] + rev_left;
+    else
+        return left + rev_left;
 }
 
-int main() {
-    // your code goes here
-    int t = 1;
-    std::vector<std::string> numbers(0);
-
+int main()
+{
+    int t;
     std::cin >> t;
-
-    if (t > 0)
-    {
-        numbers.resize(t);
-    }
+    std::vector<std::string> numbers(t);
 
     for (int i = 0; i < t; i++)
     {
