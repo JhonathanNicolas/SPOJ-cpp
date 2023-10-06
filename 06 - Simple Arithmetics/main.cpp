@@ -106,6 +106,11 @@ public:
         return _expression;
     }
 
+    char get_opr()
+    {
+        return _opr;
+    }
+
 private:
     std::string _expression;
     uint8_t _expression_number;
@@ -127,7 +132,7 @@ public:
         _raw_drawing = raw_expression;
         _size_lagest_expression = 0;
         number_of_result = 0;
-        result = "";
+        _result = "";
         _drawing = "";
     }
 
@@ -150,6 +155,7 @@ public:
 
         _size_lagest_expression = size_e1;
 
+        _get_result();
         _write_first_line();
         _jump_line();
         _write_second_line();
@@ -157,6 +163,7 @@ public:
         _write_hyphen_line();
         _jump_line();
         _write_result_line();
+        _jump_line();
 
         return _drawing;
     }
@@ -166,23 +173,33 @@ private:
     Expression _second_expression;
     uint8_t _size_lagest_expression;
     uint8_t number_of_result;
-    std::string result;
+    std::string _result;
     std::string _raw_drawing;
     std::string _drawing;
 
     void _write_first_line()
     {
+        while (_first_expression.get_large_size() < _result.size())
+        {
+            _first_expression.add_space();
+        }
+
         _drawing = _first_expression.get_expression();
     }
 
     void _write_second_line()
     {
+        while (_second_expression.get_large_size() < _result.size())
+        {
+            _second_expression.add_space();
+        }
         _drawing += _second_expression.get_expression();
     }
 
     void _write_hyphen_line()
     {
-        std:string result_line(_size_lagest_expression, '-');
+        uint8_t dash_len = _result.size() > _size_lagest_expression ? _result.size() : _size_lagest_expression;
+        std:string result_line(dash_len, '-');
         _drawing += result_line;
     }
 
@@ -191,14 +208,112 @@ private:
         _drawing += '\n';
     }
 
-    std::string _get_result()
+    void _insert_space_on_result()
     {
-        //TODO
+        _result.insert(_result.size()-1, 1, ' ');
+    }
+    void _get_result()
+    {
+        char opr  = _first_expression.get_opr();
+        int size_result = 0;
+        switch (opr)
+        {
+           case '+':
+           case '-':
+               _sum_string(_first_expression.get_expression(), _second_expression.get_expression(), opr);
+               size_result = _result.size();
+                
+               while (size_result < _size_lagest_expression)
+               {
+                   _insert_space_on_result();
+                   size_result = _result.size();
+               }
+
+            default:
+            break;
+        }
     }
 
+    std::string _padWithZeros(const std::string& str, int size) {
+        std::string padded = str;
+        while (padded.size() < size) {
+            padded.insert(padded.begin(), '0');
+        }
+        return padded;
+    }
+    void _sum_string(const std::string& str1, const std::string& str2, char opr)
+    {
+        std::string str_num1 = _removeNonDigits(str1);
+        std::string str_num2 = _removeNonDigits(str2);
+        int size_greatest_str = str_num1.size() > str_num2.size() ? str_num1.size() : str_num2.size();
+        int carry = 0, sum = 0;
+
+        str_num1 = _padWithZeros(str_num1, size_greatest_str);
+        str_num2 = _padWithZeros(str_num2, size_greatest_str);
+
+        for (int i = size_greatest_str - 1; i >= 0 || carry; i--)
+        {
+            if (opr == '+') 
+            {
+                if (i < 0)
+                {
+                    _result += '1';
+                    carry = 0;
+                }
+                else
+                {
+                    sum = (str_num1[i] - '0') + (str_num2[i] - '0') + carry;
+                    _result += (sum % 10) + '0';
+                    carry = sum / 10;
+                }
+            }
+            else if (opr == '-')
+            {
+                {
+                    int num1 = str_num1[i] - '0';
+                    int num2 = str_num2[i] - '0';
+
+                    if (num1 >= num2)
+                    {
+                        sum = num1 - num2 - carry;
+                        carry = 0;
+                    }
+                    else
+                    {
+                        sum = 10 + num1 - num2 - carry;
+                        carry = 1;
+                    }
+                }
+
+                _result += sum + '0';
+            }
+        }
+
+        std::string result(_result.rbegin(), _result.rend());
+        _result = result;
+
+        for (int i = 0; i < _result.size() - 1;)
+        {
+            if (_result[0] == '0')
+                _result.erase(0, 1);
+            else
+                break;
+        }
+        
+    }
+
+    std::string _removeNonDigits(const std::string& input) {
+        std::string result;
+        for (char c : input) {
+            if (isdigit(c)) {
+                result += c;
+            }
+        }
+        return result;
+    }
     void _write_result_line()
     {
-        //TODO
+        _drawing += _result;
     }
 
     void _assing_expression()
@@ -249,7 +364,7 @@ int main() {
 
     for (int i = 0; i < t; i++)
     {
-        std::cout << print_drawing(expression[i]) << endl;
+        std::cout << print_drawing(expression[i]);
     }
 
     return 0;
