@@ -58,6 +58,8 @@ Warning: large Input/Output data, be careful with certain languages.
 #include <iostream>
 #include <string>
 #include <vector>
+#include <sstream>
+#include <algorithm>
 using namespace std;
 
 
@@ -133,6 +135,7 @@ public:
         _size_lagest_expression = 0;
         number_of_result = 0;
         _result = "";
+        _result2 = "";
         _drawing = "";
     }
 
@@ -156,15 +159,17 @@ public:
         _size_lagest_expression = size_e1;
 
         _get_result();
+        get_second_result_line();
         _write_first_line();
         _jump_line();
         _write_second_line();
         _jump_line();
-        _write_hyphen_line();
+        _write_hyphen_first_line();
         _jump_line();
-        _write_result_line();
+        _write_first_result_line();
         _jump_line();
-
+        _write_hyphen_second_line();
+        _write_second_result_line();
         return _drawing;
     }
 
@@ -174,31 +179,73 @@ private:
     uint8_t _size_lagest_expression;
     uint8_t number_of_result;
     std::string _result;
+    std::string _result2;
     std::string _raw_drawing;
     std::string _drawing;
 
     void _write_first_line()
     {
-        while (_first_expression.get_large_size() < _result.size())
+        int size_result = _result.find('\n') == std::string::npos ? _result.size() : _result.find('\n');
+        int size_result2 = _result2.size();
+
+        while (_first_expression.get_large_size() < size_result-1)
         {
             _first_expression.add_space();
+            size_result = _result.find('\n') == std::string::npos ? _result.size() : _result.find('\n');
         }
 
-        _drawing = _first_expression.get_expression();
+        if (_result2 != "")
+        {
+            while (_first_expression.get_large_size() < size_result2)
+            {
+                _first_expression.add_space();
+            }
+        }
+            _drawing = _first_expression.get_expression();
     }
 
     void _write_second_line()
     {
-        while (_second_expression.get_large_size() < _result.size())
+        int size_result = _result.find('\n') == std::string::npos ? _result.size() : _result.find('\n');;
+        int size_result2 = _result2.size();
+
+        while (_second_expression.get_large_size() < size_result-1)
         {
             _second_expression.add_space();
+            size_result = _result.find('\n') == std::string::npos ? _result.size() : _result.find('\n');
+        }
+
+        if (_result2 != "")
+        {
+            while (_second_expression.get_large_size() < size_result2)
+            {
+                _second_expression.add_space();
+            }
         }
         _drawing += _second_expression.get_expression();
     }
 
-    void _write_hyphen_line()
+    void _write_hyphen_first_line()
     {
-        uint8_t dash_len = _result.size() > _size_lagest_expression ? _result.size() : _size_lagest_expression;
+        std:string result_line(_size_lagest_expression, '-');
+        int size_result2 = _result2.size();
+
+        if (_result2 != "")
+        {
+            while (result_line.size() < size_result2)
+            {
+                result_line = ' ' + result_line;
+            }
+        }
+        _drawing += result_line;
+    }
+
+    void _write_hyphen_second_line()
+    {
+        if ((_first_expression.get_opr() != '*') || ( (_first_expression.get_opr() == '*') && (_removeNonDigits(_second_expression.get_expression()).size() == 1) ))
+            return;
+
+        uint8_t dash_len = _result.find('\n');
         std:string result_line(dash_len, '-');
         _drawing += result_line;
     }
@@ -210,7 +257,7 @@ private:
 
     void _insert_space_on_result()
     {
-        _result.insert(_result.size()-1, 1, ' ');
+        _result.insert(0, 1, ' ');
     }
     void _get_result()
     {
@@ -218,20 +265,122 @@ private:
         int size_result = 0;
         switch (opr)
         {
-           case '+':
-           case '-':
-               _sum_string(_first_expression.get_expression(), _second_expression.get_expression(), opr);
-               size_result = _result.size();
+            case '+':
+            case '-':
+                 _result = _sum_string(_first_expression.get_expression(), _second_expression.get_expression(), opr);
+                 size_result = _result.size();
                 
-               while (size_result < _size_lagest_expression)
-               {
-                   _insert_space_on_result();
-                   size_result = _result.size();
-               }
+                 while (size_result < _size_lagest_expression)
+                 {
+                      _insert_space_on_result();
+                      size_result = _result.size();
+                 }
+            break;
 
+            case '*':
+                _result = _multiply_string(_first_expression.get_expression(), _second_expression.get_expression());
             default:
             break;
         }
+    }
+    std::string _multiply_string(const std::string& str1, const std::string& str2)
+    {
+        std::string str_num1 = _removeNonDigits(str1);
+        std::string str_num2 = _removeNonDigits(str2);
+        std::string result = "";
+        int carry = 0, sum = 0, diff_size = 0;
+        int size_greatest_str = str_num1.size() > str_num2.size() ? str_num1.size() : str_num2.size();
+
+        str_num1 = _padWithZeros(str_num1, size_greatest_str);
+        str_num2 = _padWithZeros(str_num2, str_num2.size() == 1 ? 0 : size_greatest_str);
+
+        for (int i = str_num2.size() - 1; i >= 0; i--)
+        {
+            bool is_padding = false;
+            diff_size = 0;
+            for (int j = 0; j < str_num1.size(); j++)
+            {
+                if (str_num1[j] == '0')
+                {
+                    is_padding = true;
+                }
+                else
+                {
+                    is_padding = false;
+                    diff_size = j;
+                    break;
+                }
+            }
+            for (int j = str_num1.size() - 1; j >= diff_size; j--)
+            {
+                sum = (str_num1[j] - '0') * (str_num2[i] - '0') ;
+                sum += (sum == 0) ? 0 : carry;
+                result += (sum % 10) + '0';
+                carry = sum / 10;
+            }
+
+            if (carry)
+            {
+                result += carry + '0';
+                carry = 0;
+            }
+                
+
+            result += '\n';
+        }
+
+        result = _add_spaces_on_multiply(result);
+        result.erase(result.size() - 1);
+        return result;
+    }
+
+    std::string _add_spaces_on_multiply(const std::string& input) 
+    {
+        std::istringstream ss(input);
+        std::string line;
+        std::vector<std::string> lines;
+
+        while (std::getline(ss, line, '\n'))
+        {
+            std::string line_temp = line;
+
+            for (int i = line_temp.size() - 1; i > 0 ; i--)
+          {
+                if (line[i] == '0')
+                {
+                    line.erase(i,1);
+                    line += ' ';
+                }
+                else
+                    break;
+            }
+
+            lines.push_back(line);
+
+        }
+
+        std::string result;
+        std::string l_old = "";
+        int spacesNeeded = lines.size() - 1;
+        for (auto& l : lines) {
+
+            l.insert(l.end(), spacesNeeded, ' ');
+
+            if (l_old != "")
+            {
+                while (l.size() < l_old.size() - 1)
+                {
+                    l.insert(l.end(), 1, ' ');
+                }
+            }
+
+            l_old = l;
+            std::reverse(l.begin(), l.end());
+            result += l + '\n';
+            spacesNeeded -= 1;
+        }
+
+        return result;
     }
 
     std::string _padWithZeros(const std::string& str, int size) {
@@ -241,10 +390,11 @@ private:
         }
         return padded;
     }
-    void _sum_string(const std::string& str1, const std::string& str2, char opr)
+    std::string _sum_string(const std::string& str1, const std::string& str2, char opr)
     {
         std::string str_num1 = _removeNonDigits(str1);
         std::string str_num2 = _removeNonDigits(str2);
+        std::string result_r = "";
         int size_greatest_str = str_num1.size() > str_num2.size() ? str_num1.size() : str_num2.size();
         int carry = 0, sum = 0;
 
@@ -257,13 +407,13 @@ private:
             {
                 if (i < 0)
                 {
-                    _result += '1';
+                    result_r += '1';
                     carry = 0;
                 }
                 else
                 {
                     sum = (str_num1[i] - '0') + (str_num2[i] - '0') + carry;
-                    _result += (sum % 10) + '0';
+                    result_r += (sum % 10) + '0';
                     carry = sum / 10;
                 }
             }
@@ -285,20 +435,22 @@ private:
                     }
                 }
 
-                _result += sum + '0';
+                result_r += sum + '0';
             }
         }
 
-        std::string result(_result.rbegin(), _result.rend());
-        _result = result;
+        std::string result(result_r.rbegin(), result_r.rend());
+        result_r = result;
 
-        for (int i = 0; i < _result.size() - 1;)
+        for (int i = 0; i < result_r.size() - 1;)
         {
-            if (_result[0] == '0')
-                _result.erase(0, 1);
+            if (result_r[0] == '0')
+                result_r.erase(0, 1);
             else
                 break;
         }
+
+        return result_r;
         
     }
 
@@ -311,9 +463,46 @@ private:
         }
         return result;
     }
-    void _write_result_line()
+
+    void _write_first_result_line()
     {
         _drawing += _result;
+    }
+
+    void _write_second_result_line()
+    {
+        if ((_first_expression.get_opr() != '*') || ((_first_expression.get_opr() == '*') && (_removeNonDigits(_second_expression.get_expression()).size() == 1)))
+            return;
+
+        _jump_line();
+        _drawing += _result2;
+        _jump_line();
+    }
+
+    void get_second_result_line()
+    {
+        std::vector<std::string> lines;
+        std::istringstream ss(_result);
+        std::string line;
+        std::string result = "0";
+        std::string temp = "0";
+
+        if ((_first_expression.get_opr() != '*') || ((_first_expression.get_opr() == '*') && (_removeNonDigits(_second_expression.get_expression()).size() == 1)))
+            return;
+
+        while (std::getline(ss, line, '\n'))
+        {
+            lines.push_back(line);
+        }
+
+        for (int i = 0; i < lines.size(); i++)
+        {
+            std::string dozens = std::string(i, '0');
+            result = _sum_string(result, lines[i] + dozens, '+');
+        }
+
+        _result2 =  result;
+
     }
 
     void _assing_expression()
@@ -364,8 +553,7 @@ int main() {
 
     for (int i = 0; i < t; i++)
     {
-        std::cout << print_drawing(expression[i]);
+        std::cout << print_drawing(expression[i]) <<endl;
     }
-
     return 0;
 }
