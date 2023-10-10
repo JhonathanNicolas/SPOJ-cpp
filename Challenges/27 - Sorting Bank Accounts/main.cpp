@@ -51,49 +51,53 @@ Output:
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include <limits>
 #include <algorithm>
 
 using namespace std;
 
-typedef std::string account_number;
-
-int compareNumericStrings(const account_number& str1, const account_number& str2) {
-    if (str1 < str2) return -1;
-    if (str1 > str2) return 1;
-    return 0;
-}
-
 int main() {
     int t, j;
     cin >> t;
-    vector<unordered_map<account_number, int>> accounts_map(t);
+    cin.ignore();
+
+    vector<vector<pair<string, int>>> all_results;
 
     for (int k = 0; k < t; k++) {
         cin >> j;
-        cin.ignore(numeric_limits<streamsize>::max(), '\n');
-        account_number temp;
+        cin.ignore();
+
+        unordered_map<string, int> accounts_map;
+        string temp, digit_only;
 
         for (int i = 0; i < j; i++) {
             getline(cin, temp);
-            temp.erase(remove_if(temp.begin(), temp.end(), [](char c) { return !isdigit(c); }), temp.end());
-            accounts_map[k][temp]++;
+            digit_only.clear();
+
+            for (char c : temp) {
+                if (isdigit(c)) {
+                    digit_only += c;
+                }
+            }
+
+            accounts_map[digit_only]++;
         }
+
+        vector<pair<string, int>> sorted_accounts(accounts_map.begin(), accounts_map.end());
+        sort(sorted_accounts.begin(), sorted_accounts.end());
+
+        all_results.push_back(sorted_accounts);
     }
 
     for (int i = 0; i < t; i++) {
-        vector<pair<account_number, int>> sorted_accounts(accounts_map[i].begin(), accounts_map[i].end());
-        sort(sorted_accounts.begin(), sorted_accounts.end(), [](const auto& a, const auto& b) {
-            return compareNumericStrings(a.first, b.first) < 0;
-            });
-
-        for (const auto& p : sorted_accounts) {
+        for (const auto& p : all_results[i]) {
             cout << p.first.substr(0, 2) << " " << p.first.substr(2, 8) << " " << p.first.substr(10, 4) << " "
                 << p.first.substr(14, 4) << " " << p.first.substr(18, 4) << " " << p.first.substr(22, 4)
                 << " " << p.second << "\n";
         }
 
-        cout << "\n";
+        if (i < t - 1) {
+            cout << "\n";
+        }
     }
 
     return 0;
